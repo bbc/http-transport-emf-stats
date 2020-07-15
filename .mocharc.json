@@ -1,0 +1,6 @@
+{
+  "require": "@babel/register",
+  "extension": ["js"],
+  "exit": true,
+  "spec": "test/**/*.test.js"
+}

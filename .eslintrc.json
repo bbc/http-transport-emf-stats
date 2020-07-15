@@ -1,0 +1,22 @@
+{
+  "env": {
+    "es2020": true,
+    "node": true
+  },
+  "extends": [
+    "airbnb-base",
+    "plugin:import/recommended",
+    "plugin:mocha/recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 11,
+    "sourceType": "module"
+  },
+  "plugins": ["import", "mocha"],
+  "rules": {
+    "comma-dangle": ["error", "never"],
+    "max-len": ["error", { "code": 120, "ignoreUrls": true }],
+    "semi": ["error", "always"],
+    "mocha/no-mocha-arrows": "off"
+  }
+}
