@@ -30,7 +30,7 @@ export function camelCase(input, allCapital = false, splitToken = '.') {
 
   const split = input.split(splitToken);
 
-  const reducer = (accumulator, current) => `${accumulator}${capitalise(current)}`;
+  const reducer = (accumulator, current) => `${accumulator.trim()}${capitalise(current)}`;
 
   const args = [reducer];
 
