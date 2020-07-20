@@ -15,7 +15,7 @@
   "plugins": ["import", "mocha"],
   "rules": {
     "comma-dangle": ["error", "never"],
-    "max-len": ["error", { "code": 120, "ignoreUrls": true }],
+    "max-len": ["error", { "code": 125, "ignoreUrls": true }],
     "semi": ["error", "always"],
     "mocha/no-mocha-arrows": "off"
   }

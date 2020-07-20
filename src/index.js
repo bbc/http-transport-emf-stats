@@ -18,19 +18,20 @@ const statsObj = {
   response2xxCount: 0, // The number of 2XX responses
   response1xxCount: 0, // The number of 1XX responses
   responseInvalidCount: 0, // The number of invalid response statuses
-  cacheHitCount: 0, // The number of cache hits
-  cacheMissCount: 0, // The number of cache misses
-  cacheStaleCount: 0, // The number of cache stale
-  cacheErrorCount: 0, // The number of cache error
-  cacheTimeoutCount: 0, // The number of cache timeout
-  cacheRevalidateCount: 0, // The number of cache revalidate
-  cacheRevalidateErrorCount: 0, // The number of cache error revalidate
-  cacheAudit: [] // List of cache events used for troubleshooting purposes
+  cacheAudit: [] // Contains a list of groups of triggered events from the cache. It is used for troubleshooting purposes
 };
 
 const HTTP_5XX_RESPONSE = 'HTTP_5XX_RESPONSE';
 
-const actions = ['hit', 'miss', 'stale', 'error', 'timeout', 'revalidate', 'revalidate.error'];
+const actions = [
+  'hit',
+  'miss',
+  'stale',
+  'error',
+  'timeout',
+  'revalidate',
+  'revalidate.error'
+];
 
 async function statsPlugin(emitter, clientName, context, next) {
   const attempt = {
@@ -69,6 +70,8 @@ async function statsPlugin(emitter, clientName, context, next) {
     if (emitter) {
       actions.forEach((action) => {
         emitter.on(`cache.${clientName}.${action}`, () => {
+          // even if the same event is emitted multiple times
+          // the action will be counted as one
           attempt.cache[camelCase(action)] = true;
           cacheAudit.push(action);
         });
@@ -76,14 +79,44 @@ async function statsPlugin(emitter, clientName, context, next) {
     }
 
     /**
-     * This reference must be set before calling next, otherwise
+     * This reference must be set before calling "next", otherwise
      * in case of an unresponsive upstream (e.g. ESOCKETTIMEDOUT)
-     * "next" will throw an error, preventing the stats object
-     * to be set in "context.res".
+     * "next" will throw an error jumping to the cacth block,
+     * preventing the stats object to be set in "context.res".
      */
     context.res.stats = statsObj;
 
     await next();
+
+    /**
+     * This same object must be set here after calling "next" as a workaround
+     * of a misbehaviour of the http-transport-cache plugin.
+     *
+     * Before caching the "context.res" is a "Response" object. When the response is cached,
+     * it is serialised as a JSON object with the following shape:
+     *
+     * {
+     *   body: '{"service":"rms-the-doors","version":"258-1.x86_64","environment":"live"}',
+     *   headers: {
+     *     ...
+     *   },
+     *   statusCode: 200,
+     *   elapsedTime: 15,
+     *   url: '',
+     *   fromCache: true,
+     *   ttl: 54458,
+     *   revalidate: undefined
+     * }
+     */
+    context.res.stats = statsObj;
+
+    /**
+     * When the response is returned from the cache, there is
+     * no request to the server to count, hence we early return.
+     */
+    if (attempt.cache.hit || attempt.cache.stale) {
+      return;
+    }
 
     /**
      * After this point, a valid response has been received.
@@ -112,10 +145,9 @@ async function statsPlugin(emitter, clientName, context, next) {
     // 4xx response
     if (context.res.statusCode < 500) {
       context.res.stats.response4xxCount += 1;
-      return;
     }
 
-    // 5xx response
+    // 5xx response (it throws to eventually retry)
     if (context.res.statusCode < 600) {
       context.res.stats.response5xxCount += 1;
       throw new Error(HTTP_5XX_RESPONSE);
@@ -123,7 +155,9 @@ async function statsPlugin(emitter, clientName, context, next) {
 
     context.res.stats.responseInvalidCount += 1;
   } catch (error) {
+    // if we are here for any other reason (e.g. ESOCKETTIMEDOUT)
     if (error.message !== HTTP_5XX_RESPONSE) {
+      // signal there was no response (i.e. no body or headers, status or time)
       withResponse = false;
       context.res.stats.requestErrorCount += 1;
     }
