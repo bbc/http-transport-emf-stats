@@ -125,3 +125,30 @@ try {
   // can access stats data
 }
 ```
+
+## Plugin options
+
+The stats plugin only accepts two optional parameters:
+
+- events: it is an EventEmitter object exposed by [@bbc/http-transport-cache](https://github.com/bbc/http-transport-cache) which is used to listen to cache events.
+- upstreamName: it is a string which is used to build the event triggered by the EventEmitter, and represents the name of the upstream service.
+
+## Testing and linting
+
+To run unit tests and coverage reports
+
+```
+npm run test
+```
+
+or just tests without coverage report
+
+```
+npm run test:only
+```
+
+To run code linting
+
+```
+npm run lint
+```
