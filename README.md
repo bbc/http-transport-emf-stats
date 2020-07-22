@@ -108,3 +108,18 @@ or as following if the cache is enabled and a response is received:
   }
 }
 ```
+
+The `stats` object is set in the `res` object when the request resolves or in the error object when it rejects. If you want to access the stats info do as following:
+
+```js
+try {
+  const response = await client.get(uri).asResponse();
+  const { stats } = response.res;
+
+  // can access stats data
+} catch (error) {
+  const { stats } = error;
+
+  // can access stats data
+}
+```
