@@ -35,7 +35,7 @@ const client = HttpTransport
   .createClient();
 ```
 
-or with cache enabled in conjunction with [http-transport-cache](https://github.com/bbc/http-transport-cache)
+or with cache enabled in conjunction with [@bbc/http-transport-cache](https://github.com/bbc/http-transport-cache)
 
 ```js
 import { events, maxAge, staleIfError } from '@bbc/http-transport-cache';
@@ -58,6 +58,8 @@ const client = HttpTransport
   .use(staleIfError(catbox, cacheOpts))
   .createClient();
 ```
+
+It is important to pass the `events` EventEmitter object exposed by the `http-transport-cache` in order for the `stats` plugin to listen to the cache events emitted during the request.
 
 ## Stats
 
