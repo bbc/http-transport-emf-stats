@@ -5,13 +5,13 @@ EMF stats is a plugin that can be used by [http-transport](https://github.com/bb
 
 ## Installation
 
-```
+```bash
 npm install @bbc/http-transport-emf-stats
 ```
 
 or
 
-```
+```bash
 yarn add @bbc/http-transport-emf-stats
 ```
 
@@ -19,13 +19,13 @@ yarn add @bbc/http-transport-emf-stats
 
 An example usage of this plugin is:
 
-```
+```js
 import HttpTransport from '@bbc/http-transport';
 ```
 
 without cache enabled
 
-```
+```js
 const client = HttpTransport
   .createBuilder()
   .userAgent('...')
@@ -37,11 +37,7 @@ const client = HttpTransport
 
 or with cache enabled in conjunction with [http-transport-cache](https://github.com/bbc/http-transport-cache)
 
-```
-
-```
-
-```
+```js
 import { events, maxAge, staleIfError } from '@bbc/http-transport-cache';
 
 const catbox = ...; // a catbox instance
@@ -67,7 +63,7 @@ const client = HttpTransport
 
 The stats object is structured as following:
 
-```
+```js
 {
   attempts: [], // a list of objects representing each single attempt
   attemptCount: 0, // The number of attempts in total. This number is equal to "attempts.length".
@@ -86,7 +82,7 @@ The stats object is structured as following:
 
 The `attempt` object is structured as following
 
-```
+```js
 {
   cache: null,
   response: null
@@ -95,7 +91,7 @@ The `attempt` object is structured as following
 
 if no cache is enabled and no response is received, or as following
 
-```
+```js
 {
   cache: {
     hit: boolean,
@@ -113,6 +109,4 @@ if no cache is enabled and no response is received, or as following
 }
 ```
 
-if either the cache emitter is enabled and a response is received.
-
-Middle
+if either the cache is enabled or a response is received.
