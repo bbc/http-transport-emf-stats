@@ -130,8 +130,8 @@ try {
 
 The stats plugin only accepts two optional parameters:
 
-- events: it is an EventEmitter object exposed by [@bbc/http-transport-cache](https://github.com/bbc/http-transport-cache) which is used to listen to cache events.
-- upstreamName: it is a string which is used to build the event triggered by the EventEmitter, and represents the name of the upstream service.
+- `emitter`: it is an EventEmitter object exposed by [@bbc/http-transport-cache](https://github.com/bbc/http-transport-cache) which is used to listen to cache events.
+- `upstreamName`: it is a string which is used to build the event triggered by the EventEmitter, and represents the name of the upstream service.
 
 ## Testing and linting
 
