@@ -3,6 +3,25 @@ import { capitalise, camelCase } from '../src/util';
 
 describe('[src/util.js]', () => {
   describe('capitalise', () => {
+    describe('input validation', () => {
+      const tests = [
+        { statement: 'is undefined', input: undefined },
+        { statement: 'is null', input: null },
+        { statement: 'is a number', input: 0 },
+        { statement: 'is a boolean', input: true }
+      ];
+
+      tests.forEach((test) => {
+        const { statement, input } = test;
+        it(`should throw if the input ${statement}`, () => {
+          // eslint-disable-next-line no-unused-expressions
+          expect(() => {
+            capitalise(input);
+          }).to.throw;
+        });
+      });
+    });
+
     const tests = [
       {
         title: 'should capitalise the first character of the string',
@@ -35,6 +54,31 @@ describe('[src/util.js]', () => {
   });
 
   describe('camelCase', () => {
+    describe('input validation', () => {
+      const tests = [
+        { args: [undefined] },
+        { args: [null] },
+        { args: [0] },
+        { args: [true] },
+        { args: ['', null] },
+        { args: ['', 0] },
+        { args: ['', ''] },
+        { args: ['', false, null] },
+        { args: ['', true, 0] },
+        { args: ['', false, true] }
+      ];
+
+      tests.forEach((test) => {
+        const { args } = test;
+        it('should throw if the input parameter types do not match the required ones', () => {
+          // eslint-disable-next-line no-unused-expressions
+          expect(() => {
+            camelCase(...args);
+          }).to.throw;
+        });
+      });
+    });
+
     const tests = [
       {
         title: 'should remove the split separator camel-casing the words',

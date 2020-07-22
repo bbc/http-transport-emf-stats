@@ -26,6 +26,7 @@ export function capitalise(input) {
  */
 export function camelCase(input, allCapital = false, splitToken = '.') {
   if (typeof input !== 'string') throw new TypeError('The "input" parameter is not a string');
+  if (typeof allCapital !== 'boolean') throw new TypeError('The "allCapital" parameter is not a boolean');
   if (typeof splitToken !== 'string') throw new TypeError('The "splitToken" parameter is not a string');
 
   const split = input.split(splitToken);

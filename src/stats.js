@@ -1,4 +1,4 @@
-import { initAttempt, initStats } from './init';
+import * as init from './init';
 import { addCacheEventListener } from './event';
 import { HTTP_5XX_RESPONSE, actions } from './consts';
 
@@ -6,7 +6,7 @@ export default async function stats(emitter, clientName, context, next) {
   // flags the presence of an upstream response
   let withResponse = true;
   // init the current attempt
-  const attempt = initAttempt();
+  const attempt = init.initAttempt();
   // init the cache audit array
   const cacheAudit = [];
 
@@ -40,7 +40,7 @@ export default async function stats(emitter, clientName, context, next) {
      * preventing the stats object to be set in "context.res".
      */
     if (typeof context.res.stats === 'undefined') {
-      context.res.stats = initStats();
+      context.res.stats = init.initStats();
     }
 
     await next();
@@ -70,7 +70,7 @@ export default async function stats(emitter, clientName, context, next) {
      * "context.res" is overwritten.
      */
     if (typeof context.res.stats === 'undefined') {
-      context.res.stats = initStats();
+      context.res.stats = init.initStats();
       // jump to the "finally" block
       return;
     }
@@ -81,8 +81,14 @@ export default async function stats(emitter, clientName, context, next) {
 
     context.res.stats.requestCount += 1;
 
+    // invalid HTTP response
+    if (context.res.statusCode < 100) {
+      context.res.stats.responseInvalidCount += 1;
+      return;
+    }
+
     // 1xx response
-    if (context.res.statusCode >= 100 && context.res.statusCode < 200) {
+    if (context.res.statusCode < 200) {
       context.res.stats.response1xxCount += 1;
       return;
     }
@@ -111,6 +117,7 @@ export default async function stats(emitter, clientName, context, next) {
       throw new Error(HTTP_5XX_RESPONSE);
     }
 
+    // everything else is an invalid HTTP response too
     context.res.stats.responseInvalidCount += 1;
   } catch (error) {
     // an error has been thrown because the upstream was unresponsive (e.g. ESOCKETTIMEDOUT)
