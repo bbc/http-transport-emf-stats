@@ -2,7 +2,7 @@ import * as init from './init';
 import { addCacheEventListener } from './event';
 import { HTTP_5XX_RESPONSE, actions } from './consts';
 
-export default async function stats(emitter, clientName, context, next) {
+export default async function stats(emitter, upstreamName, context, next) {
   // flags the presence of an upstream response
   let withResponse = true;
   // init the current attempt
@@ -29,7 +29,7 @@ export default async function stats(emitter, clientName, context, next) {
      */
     if (emitter) {
       actions.forEach((action) => {
-        emitter.on(`cache.${clientName}.${action}`, addCacheEventListener.bind(this, attempt, action, cacheAudit));
+        emitter.on(`cache.${upstreamName}.${action}`, addCacheEventListener.bind(this, attempt, action, cacheAudit));
       });
     }
 
@@ -144,7 +144,10 @@ export default async function stats(emitter, clientName, context, next) {
     }
 
     context.res.stats.attempts.push(attempt);
-    context.res.stats.cacheAudit.push(cacheAudit);
+
+    if (cacheAudit.length > 0) {
+      context.res.stats.cacheAudit.push(cacheAudit);
+    }
 
     if (context.res.stats.attemptCount > 0) {
       context.res.stats.retryCount = context.res.stats.attemptCount - 1;

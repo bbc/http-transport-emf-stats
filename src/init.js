@@ -15,9 +15,12 @@ export function initStats() {
   };
 }
 
-export function initAttempt() {
-  return {
-    cache: {
+export function initAttempt(emitter) {
+  const response = null;
+  let cache = null;
+
+  if (emitter) {
+    cache = {
       hit: false,
       miss: false,
       stale: false,
@@ -25,7 +28,8 @@ export function initAttempt() {
       timeout: false,
       revalidate: false,
       revalidateError: false
-    },
-    response: null
-  };
+    }
+  }
+
+  return { cache, response };
 }

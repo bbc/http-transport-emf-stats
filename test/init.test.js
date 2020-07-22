@@ -23,8 +23,14 @@ describe('[src/init.js]', () => {
   });
 
   describe('initAttempt', () => {
-    it('should return the initial attempt object', () => {
+    it('should return the initial attempt object with cache set to null if no emitter is set', () => {
       const result = initAttempt();
+      expect(result).to.be.deep.equal({ cache: null, response: null });
+    });
+
+    it('should return the initial attempt object with cache initialised if emitter is set', () => {
+      const emitter = {};
+      const result = initAttempt(emitter);
       expect(result).to.be.deep.equal({
         cache: {
           hit: false,
