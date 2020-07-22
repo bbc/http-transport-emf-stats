@@ -25,6 +25,7 @@
     "stats",
     "embedded metric format"
   ],
+  "files": ["dist"],
   "author": {
     "name": "Simone Spaccarotella",
     "email": "simone.spaccarotella@bbc.co.uk",
