@@ -80,7 +80,7 @@ The stats object is structured as following:
 }
 ```
 
-The `attempt` object is structured as following
+The `attempt` object is structured as following if no cache is enabled and no response is received:
 
 ```js
 {
@@ -89,7 +89,7 @@ The `attempt` object is structured as following
 }
 ```
 
-if no cache is enabled and no response is received, or as following
+or as following if the cache is enabled and a response is received:
 
 ```js
 {
@@ -108,5 +108,3 @@ if no cache is enabled and no response is received, or as following
   }
 }
 ```
-
-if either the cache is enabled or a response is received.
