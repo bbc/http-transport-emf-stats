@@ -1,5 +1,12 @@
+[![BBC](https://circleci.com/gh/bbc/http-transport-emf-stats.svg?style=shield)](https://app.circleci.com/pipelines/github/bbc/http-transport-emf-stats?branch=master)
+
+* [Installation](#installation)
+* [Usage](#usage)
+* [Stats](#stats)
+* [Plugin options](#plugin-options)
+* [Testing and linting](#testing-and-linting)
+
 # HTTP transport EMF stats
-[![Build Status](https://travis-ci.org/bbc/http-transport-emf-stats.svg?branch=master)](https://travis-ci.org/bbc/http-transport-emf-stats)
 
 EMF stats is a plugin that can be used by [http-transport](https://github.com/bbc/http-transport) to return a stats object alongside the HTTP response.
 
