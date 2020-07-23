@@ -28,7 +28,7 @@ export function initAttempt(emitter) {
       timeout: false,
       revalidate: false,
       revalidateError: false
-    }
+    };
   }
 
   return { cache, response };
