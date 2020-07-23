@@ -6,7 +6,7 @@ export default async function stats(emitter, upstreamName, context, next) {
   // flags the presence of an upstream response
   let withResponse = true;
   // init the current attempt
-  const attempt = init.initAttempt();
+  const attempt = init.initAttempt(emitter);
   // init the cache audit array
   const cacheAudit = [];
 

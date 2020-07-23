@@ -22,12 +22,23 @@ describe('[src/stats.js]', () => {
 
   afterEach(() => sinon.restore());
 
-  it('should init the attempt object', async () => {
-    sinon.stub(init, 'initAttempt').returns({});
+  describe('attempt object initialisation', () => {
+    it('should call "initAttempt" with undefined if the emitter is not defined', async () => {
+      sinon.stub(init, 'initAttempt').returns({});
+      emitter = undefined;
 
-    await stats(emitter, clientName, context, next);
+      await stats(emitter, clientName, context, next);
 
-    sinon.assert.calledOnce(init.initAttempt);
+      sinon.assert.calledOnceWithExactly(init.initAttempt, undefined);
+    });
+
+    it('should call "initAttempt" with the emitter if set', async () => {
+      sinon.stub(init, 'initAttempt').returns({});
+
+      await stats(emitter, clientName, context, next);
+
+      sinon.assert.calledOnceWithExactly(init.initAttempt, emitter);
+    });
   });
 
   it('should attach the cache event listeners', async () => {
