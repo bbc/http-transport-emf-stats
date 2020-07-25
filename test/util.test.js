@@ -29,12 +29,9 @@ describe('[src/util.js]', () => {
         expected: 'Input'
       },
       {
-        title:
-          `should capitalise the first character of the string,
-          lowering the case of the remaining characters and trimming all whitespaces
-          `,
+        title: 'should capitalise the first character of the string, keeping the rest untouched',
         input: 'inPuT     ',
-        expected: 'Input'
+        expected: 'InPuT'
       },
       {
         title: 'should leave a capitalised string as is',
@@ -88,7 +85,7 @@ describe('[src/util.js]', () => {
       {
         title: 'should camel-case by removing the empty spaces',
         args: ['  one.tWo   '],
-        expected: 'oneTwo'
+        expected: 'oneTWo'
       },
       {
         title: 'should camel-case by capitalising the first character',

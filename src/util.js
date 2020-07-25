@@ -10,7 +10,7 @@
 export function capitalise(input) {
   if (typeof input !== 'string') throw new TypeError('The input parameter is not a string');
 
-  const i = input.trim().toLowerCase();
+  const i = input.trim();
   return `${i.charAt(0).toUpperCase()}${i.slice(1)}`;
 }
 
