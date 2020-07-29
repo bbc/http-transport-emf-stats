@@ -127,6 +127,10 @@ export default async function stats(emitter, upstreamName, context, next) {
       // increment the error count
       context.res.stats.requestErrorCount += 1;
     }
+    error.body = context.res.body;
+    error.headers = context.res.headers;
+    error.responseStatus = context.res.statusCode;
+    error.responseTime = context.res.elapsedTime;
     error.stats = context.res.stats;
     // tells http-transport to retry
     throw error;

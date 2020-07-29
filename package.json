@@ -1,6 +1,6 @@
 {
   "name": "@bbc/http-transport-emf-stats",
-  "version": "0.1.3-beta",
+  "version": "0.1.4-beta",
   "description": "An EMF stats adapter for HTTP transport",
   "main": "dist/http-transport-emf-stats.cjs.js",
   "module": "dist/http-transport-emf-stats.es.js",
