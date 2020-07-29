@@ -7,8 +7,8 @@
   "scripts": {
     "build": "rollup --config",
     "lint": "eslint --fix src test rollup.config.js",
-    "test": "nyc mocha",
-    "test:only": "mocha"
+    "test": "BABEL_ENV=test nyc mocha",
+    "test:only": "BABEL_ENV=test mocha"
   },
   "repository": {
     "type": "git",

@@ -4,9 +4,9 @@ import pkg from './package.json';
 
 export default {
   input: 'src/index.js',
-  output: [
-    { file: pkg.main, format: 'cjs' },
-    { file: pkg.module, format: 'es' }
+  output: [ // https://rollupjs.org/guide/en/#outputexports
+    { file: pkg.main, format: 'cjs', exports: 'default' },
+    { file: pkg.module, format: 'es', exports: 'default' }
   ],
   external: [],
   plugins: [json(), terser()]
