@@ -7,8 +7,8 @@
   "scripts": {
     "build": "rollup --config",
     "lint": "eslint --fix src test rollup.config.js",
-    "test": "nyc mocha",
-    "test:only": "mocha"
+    "test": "BABEL_ENV=test nyc mocha",
+    "test:only": "BABEL_ENV=test mocha"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,9 @@
     "stats",
     "embedded metric format"
   ],
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "author": {
     "name": "Simone Spaccarotella",
     "email": "simone.spaccarotella@bbc.co.uk",
@@ -54,6 +56,7 @@
     "@babel/register": "^7.10.5",
     "@rollup/plugin-json": "^4.1.0",
     "chai": "^4.2.0",
+    "core-js": "^3.6.5",
     "eslint": "^7.4.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
