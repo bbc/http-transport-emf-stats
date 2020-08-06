@@ -1,6 +1,7 @@
 import { camelCase } from './util';
 
 export function addCacheEventListener(attempt, action, cacheAudit) {
+  console.log('addCacheEventListener', camelCase(action));
   // even if the same event is emitted multiple times
   // the action will be counted as one
   // eslint-disable-next-line no-param-reassign
