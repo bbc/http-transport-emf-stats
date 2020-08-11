@@ -11,7 +11,8 @@ describe('[src/stats.js]', () => {
 
   beforeEach(() => {
     emitter = {
-      on: sinon.spy()
+      on: sinon.spy(),
+      listeners: sinon.spy()
     };
     clientName = 'test';
     context = {
@@ -41,7 +42,7 @@ describe('[src/stats.js]', () => {
     });
   });
 
-  it('should attach the cache event listeners', async () => {
+  it('should attach the cache event listeners once', async () => {
     await stats(emitter, clientName, context, next);
     sinon.assert.callCount(emitter.on, 7);
     sinon.assert.calledWith(emitter.on, `cache.${clientName}.hit`);
@@ -52,6 +53,37 @@ describe('[src/stats.js]', () => {
     sinon.assert.calledWith(emitter.on, `cache.${clientName}.revalidate`);
     sinon.assert.calledWith(
       emitter.on,
+      `cache.${clientName}.revalidate.error`
+    );
+  });
+
+  it('should remove existing cache event listeners before rebinding', async () => {
+    const newEmitter = {
+      on: sinon.spy(),
+      off: sinon.spy(),
+      listeners: () => [() => {}]
+    };
+    await stats(newEmitter, clientName, context, next);
+    sinon.assert.callCount(newEmitter.off, 7);
+    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.hit`);
+    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.miss`);
+    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.stale`);
+    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.error`);
+    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.timeout`);
+    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.revalidate`);
+    sinon.assert.calledWith(
+      newEmitter.off,
+      `cache.${clientName}.revalidate.error`
+    );
+    sinon.assert.callCount(newEmitter.on, 7);
+    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.hit`);
+    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.miss`);
+    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.stale`);
+    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.error`);
+    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.timeout`);
+    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.revalidate`);
+    sinon.assert.calledWith(
+      newEmitter.on,
       `cache.${clientName}.revalidate.error`
     );
   });
