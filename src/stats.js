@@ -3,7 +3,6 @@ import { addCacheEventListener } from './event';
 import { HTTP_5XX_RESPONSE, actions } from './consts';
 
 export default async function stats(emitter, upstreamName, context, next) {
-  console.log("stats.stats.js");
   // flags the presence of an upstream response
   let withResponse = true;
   // init the current attempt
@@ -32,9 +31,13 @@ export default async function stats(emitter, upstreamName, context, next) {
       actions.forEach((action) => {
         const eventName = `cache.${upstreamName}.${action}`;
         const eventListeners = emitter.listeners(eventName);
-        if (!Array.isArray(eventListeners) || !eventListeners.length) {
-          emitter.on(eventName, addCacheEventListener.bind(this, attempt, action, cacheAudit));
+
+        // if there is already an event listener bound, remove it
+        if (Array.isArray(eventListeners) && eventListeners.length >= 1) {
+          eventListeners.forEach((listener) => emitter.off(eventName, listener));
         }
+
+        emitter.on(`${eventName}`, addCacheEventListener.bind(this, attempt, action, cacheAudit));
       });
     }
 
