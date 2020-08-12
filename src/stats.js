@@ -29,7 +29,15 @@ export default async function stats(emitter, upstreamName, context, next) {
      */
     if (emitter) {
       actions.forEach((action) => {
-        emitter.on(`cache.${upstreamName}.${action}`, addCacheEventListener.bind(this, attempt, action, cacheAudit));
+        const eventName = `cache.${upstreamName}.${action}`;
+        const eventListeners = emitter.listeners(eventName);
+
+        // if there is already an event listener bound, remove it
+        if (Array.isArray(eventListeners) && eventListeners.length >= 1) {
+          eventListeners.forEach((listener) => emitter.off(eventName, listener));
+        }
+
+        emitter.on(`${eventName}`, addCacheEventListener.bind(this, attempt, action, cacheAudit));
       });
     }
 
