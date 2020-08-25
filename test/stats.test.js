@@ -28,7 +28,7 @@ describe('[src/stats.js]', () => {
       sinon.stub(init, 'initAttempt').returns({});
       emitter = undefined;
 
-      await stats(emitter, clientName, context, next);
+      await stats(emitter, clientName)(context, next);
 
       sinon.assert.calledOnceWithExactly(init.initAttempt, undefined);
     });
@@ -36,60 +36,14 @@ describe('[src/stats.js]', () => {
     it('should call "initAttempt" with the emitter if set', async () => {
       sinon.stub(init, 'initAttempt').returns({});
 
-      await stats(emitter, clientName, context, next);
+      await stats(emitter, clientName)(context, next);
 
       sinon.assert.calledOnceWithExactly(init.initAttempt, emitter);
     });
   });
 
-  it('should attach the cache event listeners once', async () => {
-    await stats(emitter, clientName, context, next);
-    sinon.assert.callCount(emitter.on, 7);
-    sinon.assert.calledWith(emitter.on, `cache.${clientName}.hit`);
-    sinon.assert.calledWith(emitter.on, `cache.${clientName}.miss`);
-    sinon.assert.calledWith(emitter.on, `cache.${clientName}.stale`);
-    sinon.assert.calledWith(emitter.on, `cache.${clientName}.error`);
-    sinon.assert.calledWith(emitter.on, `cache.${clientName}.timeout`);
-    sinon.assert.calledWith(emitter.on, `cache.${clientName}.revalidate`);
-    sinon.assert.calledWith(
-      emitter.on,
-      `cache.${clientName}.revalidate.error`
-    );
-  });
-
-  it('should remove existing cache event listeners before rebinding', async () => {
-    const newEmitter = {
-      on: sinon.spy(),
-      off: sinon.spy(),
-      listeners: () => [() => {}]
-    };
-    await stats(newEmitter, clientName, context, next);
-    sinon.assert.callCount(newEmitter.off, 7);
-    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.hit`);
-    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.miss`);
-    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.stale`);
-    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.error`);
-    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.timeout`);
-    sinon.assert.calledWith(newEmitter.off, `cache.${clientName}.revalidate`);
-    sinon.assert.calledWith(
-      newEmitter.off,
-      `cache.${clientName}.revalidate.error`
-    );
-    sinon.assert.callCount(newEmitter.on, 7);
-    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.hit`);
-    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.miss`);
-    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.stale`);
-    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.error`);
-    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.timeout`);
-    sinon.assert.calledWith(newEmitter.on, `cache.${clientName}.revalidate`);
-    sinon.assert.calledWith(
-      newEmitter.on,
-      `cache.${clientName}.revalidate.error`
-    );
-  });
-
   it('should call next only once', async () => {
-    await stats(emitter, clientName, context, next);
+    await stats(emitter, clientName)(context, next);
     sinon.assert.calledOnceWithExactly(next);
   });
 
@@ -98,7 +52,7 @@ describe('[src/stats.js]', () => {
       const statsResponse = { attempts: [], cacheAudit: [] };
       sinon.stub(init, 'initStats').returns(statsResponse);
 
-      await stats(emitter, clientName, context, next);
+      await stats(emitter, clientName)(context, next);
 
       sinon.assert.calledOnce(init.initStats);
       expect(context.res).to.be.deep.equal({ stats: statsResponse });
@@ -113,7 +67,7 @@ describe('[src/stats.js]', () => {
       const statsResponse = { attempts: [], cacheAudit: [] };
       sinon.stub(init, 'initStats').returns(statsResponse);
 
-      await stats(emitter, clientName, context, next);
+      await stats(emitter, clientName)(context, next);
 
       sinon.assert.calledTwice(init.initStats);
     });
@@ -121,7 +75,7 @@ describe('[src/stats.js]', () => {
     it('should initialise the stats if next rejects', async () => {
       next = sinon.stub().rejects();
       try {
-        await stats(emitter, clientName, context, next);
+        await stats(emitter, clientName)(context, next);
       } catch {
         expect(context.res).to.haveOwnProperty('stats');
       }
@@ -129,7 +83,7 @@ describe('[src/stats.js]', () => {
   });
 
   it('should increase attempt and request counters', async () => {
-    await stats(emitter, clientName, context, next);
+    await stats(emitter, clientName)(context, next);
     expect(context.res.stats.attemptCount).to.be.equal(1);
     expect(context.res.stats.requestCount).to.be.equal(1);
   });
@@ -174,7 +128,7 @@ describe('[src/stats.js]', () => {
 
         if (statusCode === 500) {
           try {
-            await stats(emitter, clientName, context, next);
+            await stats(emitter, clientName)(context, next);
           } catch (e) {
             expect(context.res.statusCode).to.be.equal(statusCode);
             expect(context.res.stats[expected]).to.be.equal(1);
@@ -182,7 +136,7 @@ describe('[src/stats.js]', () => {
           return;
         }
 
-        await stats(emitter, clientName, context, next);
+        await stats(emitter, clientName)(context, next);
         expect(context.res.statusCode).to.be.equal(statusCode);
         expect(context.res.stats[expected]).to.be.equal(1);
       });
@@ -195,7 +149,7 @@ describe('[src/stats.js]', () => {
       context.res = {};
       nextSpy();
     };
-    await stats(emitter, clientName, context, next);
+    await stats(emitter, clientName)(context, next);
     expect(context.res.stats).to.haveOwnProperty('attemptCount', 1);
     expect(context.res.stats).to.haveOwnProperty('retryCount', 0);
     expect(context.res.stats).to.haveOwnProperty('requestCount', 0);

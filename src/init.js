@@ -1,4 +1,4 @@
-export function initStats() {
+export function initStats(upstreamName) {
   return {
     attempts: [],
     attemptCount: 0, // The number of request attempts in total. This number is equal to "attempts.length".
@@ -11,7 +11,8 @@ export function initStats() {
     response2xxCount: 0, // The number of 2XX responses
     response1xxCount: 0, // The number of 1XX responses
     responseInvalidCount: 0, // The number of invalid response statuses
-    cacheAudit: [] // Contains a list of groups of triggered events from the cache. It is used for troubleshooting purposes
+    cacheAudit: [], // Contains a list of groups of triggered events from the cache. It is used for troubleshooting purposes
+    name: upstreamName
   };
 }
 

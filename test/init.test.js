@@ -4,7 +4,8 @@ import { initStats, initAttempt } from '../src/init';
 describe('[src/init.js]', () => {
   describe('initStats', () => {
     it('should return the initial stats object', () => {
-      const result = initStats();
+      const upstreamName = 'rms';
+      const result = initStats(upstreamName);
       expect(result).to.be.deep.equal({
         attempts: [],
         attemptCount: 0,
@@ -17,7 +18,8 @@ describe('[src/init.js]', () => {
         response2xxCount: 0,
         response1xxCount: 0,
         responseInvalidCount: 0,
-        cacheAudit: []
+        cacheAudit: [],
+        name: upstreamName
       });
     });
   });

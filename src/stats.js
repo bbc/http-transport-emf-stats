@@ -1,45 +1,15 @@
 import * as init from './init';
-import { addCacheEventListener } from './event';
-import { HTTP_5XX_RESPONSE, actions } from './consts';
+import { HTTP_5XX_RESPONSE } from './consts';
 
-export default async function stats(emitter, upstreamName, context, next) {
+export default (emitter, upstreamName) => async (context, next) => {
   // flags the presence of an upstream response
   let withResponse = true;
-  // init the current attempt
-  const attempt = init.initAttempt(emitter);
-  // init the cache audit array
-  const cacheAudit = [];
+  let attempt;
+  let cacheAudit;
 
   try {
-    /**
-     * Adds event listeners for the cache events.
-     *
-     * These listeners must be defined before calling next. Everything
-     * before is called in the order plugins are "used", everything after
-     * is called backwards.
-     *
-     * Example, if I have the following plugins defined
-     *
-     * .use(p1).use(p2).use(p3)
-     *
-     * The execution will happen as following:
-     *
-     * Everything before "next" will be executed in this order: p1, p2, p3
-     * Everything after "next" will be executed in this order: p3, p2, p1
-     */
-    if (emitter) {
-      actions.forEach((action) => {
-        const eventName = `cache.${upstreamName}.${action}`;
-        const eventListeners = emitter.listeners(eventName);
-
-        // if there is already an event listener bound, remove it
-        if (Array.isArray(eventListeners) && eventListeners.length >= 1) {
-          eventListeners.forEach((listener) => emitter.off(eventName, listener));
-        }
-
-        emitter.on(`${eventName}`, addCacheEventListener.bind(this, attempt, action, cacheAudit));
-      });
-    }
+    attempt = init.initAttempt(emitter);
+    cacheAudit = [];
 
     /**
      * It must be set before calling "next", otherwise
@@ -48,7 +18,7 @@ export default async function stats(emitter, upstreamName, context, next) {
      * preventing the stats object to be set in "context.res".
      */
     if (typeof context.res.stats === 'undefined') {
-      context.res.stats = init.initStats();
+      context.res.stats = init.initStats(upstreamName);
     }
 
     await next();
@@ -78,7 +48,7 @@ export default async function stats(emitter, upstreamName, context, next) {
      * "context.res" is overwritten.
      */
     if (typeof context.res.stats === 'undefined') {
-      context.res.stats = init.initStats();
+      context.res.stats = init.initStats(upstreamName);
       // jump to the "finally" block
       return;
     }
@@ -155,14 +125,19 @@ export default async function stats(emitter, upstreamName, context, next) {
       };
     }
 
+    if (context.res.cacheStatus) {
+      attempt.cache[context.res.cacheStatus] = true;
+      cacheAudit.push(context.res.cacheStatus);
+    }
+
     context.res.stats.attempts.push(attempt);
 
     if (cacheAudit.length > 0) {
-      context.res.stats.cacheAudit.push(cacheAudit);
+      context.res.stats.cacheAudit = context.res.stats.cacheAudit.concat(cacheAudit);
     }
 
     if (context.res.stats.attemptCount > 0) {
       context.res.stats.retryCount = context.res.stats.attemptCount - 1;
     }
   }
-}
+};
