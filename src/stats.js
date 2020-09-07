@@ -6,7 +6,7 @@ export default async function stats(options = DEFAULT_OPTIONS, context, next) {
   // flags the presence of an upstream response
   let withResponse = true;
   // init the current attempt
-  const attempt = init.initAttempt(DEFAULT_OPTIONS);
+  const attempt = init.initAttempt(options);
 
   try {
     /**

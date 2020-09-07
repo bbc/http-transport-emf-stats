@@ -23,14 +23,18 @@ describe('[src/init.js]', () => {
   });
 
   describe('initAttempt', () => {
-    it('should return the initial attempt object with cache set to null if no emitter is set', () => {
-      const result = initAttempt();
+    it('should return the initial attempt object with cache set to null if the cache is disabled', () => {
+      const result = initAttempt({
+        isCacheEnabled: false
+      });
       expect(result).to.be.deep.equal({ cache: null, response: null });
     });
 
-    it('should return the initial attempt object with cache initialised if emitter is set', () => {
-      const emitter = {};
-      const result = initAttempt(emitter);
+    it('should return the initial attempt object with cache initialised if the cache is enabled', () => {
+      const options = {
+        isCacheEnabled: true
+      };
+      const result = initAttempt(options);
       expect(result).to.be.deep.equal({
         cache: {
           hit: false,
@@ -38,8 +42,9 @@ describe('[src/init.js]', () => {
           stale: false,
           error: false,
           timeout: false,
-          revalidate: false,
-          revalidateError: false
+          connectionError: false,
+          readTime: false,
+          writeTime: false
         },
         response: null
       });
