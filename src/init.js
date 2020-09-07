@@ -15,19 +15,20 @@ export function initStats() {
   };
 }
 
-export function initAttempt(emitter) {
+export function initAttempt({ isCacheEnabled }) {
   const response = null;
   let cache = null;
 
-  if (emitter) {
+  if (isCacheEnabled) {
     cache = {
       hit: false,
       miss: false,
       stale: false,
       error: false,
       timeout: false,
-      revalidate: false,
-      revalidateError: false
+      readTime: false,
+      writeTime: false,
+      connectionError: false
     };
   }
 

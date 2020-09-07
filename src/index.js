@@ -1,5 +1,5 @@
 import statsPlugin from './stats';
 
-export default function stats(emitter, upstreamName) {
-  return statsPlugin.bind(this, emitter, upstreamName);
+export default function stats(options) {
+  return statsPlugin.bind(this, options);
 }
