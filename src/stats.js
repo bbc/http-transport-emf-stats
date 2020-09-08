@@ -125,7 +125,7 @@ export default async function stats(options = DEFAULT_OPTIONS, context, next) {
 
     if (context.cacheStatus && Array.isArray(context.cacheStatus)) {
       context.cacheStatus.forEach((cacheStatus) => {
-        attempt.cache[camelCase(cacheStatus)] = true;
+        attempt.cache[camelCase(cacheStatus, false, '_')] = true;
       });
       context.res.stats.cacheAudit = context.cacheStatus;
     }
