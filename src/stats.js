@@ -1,46 +1,14 @@
 import * as init from './init';
-import { addCacheEventListener } from './event';
-import { HTTP_5XX_RESPONSE, actions } from './consts';
+import { camelCase } from './util';
+import { HTTP_5XX_RESPONSE, DEFAULT_OPTIONS } from './consts';
 
-export default async function stats(emitter, upstreamName, context, next) {
+export default async function stats(options = DEFAULT_OPTIONS, context, next) {
   // flags the presence of an upstream response
   let withResponse = true;
   // init the current attempt
-  const attempt = init.initAttempt(emitter);
-  // init the cache audit array
-  const cacheAudit = [];
+  const attempt = init.initAttempt(options);
 
   try {
-    /**
-     * Adds event listeners for the cache events.
-     *
-     * These listeners must be defined before calling next. Everything
-     * before is called in the order plugins are "used", everything after
-     * is called backwards.
-     *
-     * Example, if I have the following plugins defined
-     *
-     * .use(p1).use(p2).use(p3)
-     *
-     * The execution will happen as following:
-     *
-     * Everything before "next" will be executed in this order: p1, p2, p3
-     * Everything after "next" will be executed in this order: p3, p2, p1
-     */
-    if (emitter) {
-      actions.forEach((action) => {
-        const eventName = `cache.${upstreamName}.${action}`;
-        const eventListeners = emitter.listeners(eventName);
-
-        // if there is already an event listener bound, remove it
-        if (Array.isArray(eventListeners) && eventListeners.length >= 1) {
-          eventListeners.forEach((listener) => emitter.off(eventName, listener));
-        }
-
-        emitter.on(`${eventName}`, addCacheEventListener.bind(this, attempt, action, cacheAudit));
-      });
-    }
-
     /**
      * It must be set before calling "next", otherwise
      * in case of an unresponsive upstream (e.g. ESOCKETTIMEDOUT)
@@ -155,11 +123,14 @@ export default async function stats(emitter, upstreamName, context, next) {
       };
     }
 
-    context.res.stats.attempts.push(attempt);
-
-    if (cacheAudit.length > 0) {
-      context.res.stats.cacheAudit.push(cacheAudit);
+    if (context.cacheStatus && Array.isArray(context.cacheStatus)) {
+      context.cacheStatus.forEach((cacheStatus) => {
+        attempt.cache[camelCase(cacheStatus)] = true;
+      });
+      context.res.stats.cacheAudit = context.cacheStatus;
     }
+
+    context.res.stats.attempts.push(attempt);
 
     if (context.res.stats.attemptCount > 0) {
       context.res.stats.retryCount = context.res.stats.attemptCount - 1;

@@ -79,17 +79,17 @@ describe('[src/util.js]', () => {
     const tests = [
       {
         title: 'should remove the split separator camel-casing the words',
-        args: ['one.two'],
+        args: ['one_two'],
         expected: 'oneTwo'
       },
       {
         title: 'should camel-case by removing the empty spaces',
-        args: ['  one.tWo   '],
+        args: ['  one_tWo   '],
         expected: 'oneTWo'
       },
       {
         title: 'should camel-case by capitalising the first character',
-        args: ['one.two', true],
+        args: ['one_two', true],
         expected: 'OneTwo'
       },
       {
@@ -99,13 +99,13 @@ describe('[src/util.js]', () => {
       },
       {
         title: 'should leave the input untouched if the separator is not found',
-        args: ['one.two', false, '-'],
-        expected: 'one.two'
+        args: ['one_two', false, '-'],
+        expected: 'one_two'
       },
       {
         title: 'should leave the input untouched if the separator is not found and capitalise the first character',
-        args: ['one.two', true, '-'],
-        expected: 'One.two'
+        args: ['one_two', true, '-'],
+        expected: 'One_two'
       }
     ];
 
