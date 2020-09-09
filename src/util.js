@@ -24,7 +24,7 @@ export function capitalise(input) {
  * @param {string} splitToken the token to split the string with
  * @throws TypeError if either one or all the parameters are not strings
  */
-export function camelCase(input, allCapital = false, splitToken = '.') {
+export function camelCase(input, allCapital = false, splitToken = '_') {
   if (typeof input !== 'string') throw new TypeError('The "input" parameter is not a string');
   if (typeof allCapital !== 'boolean') throw new TypeError('The "allCapital" parameter is not a boolean');
   if (typeof splitToken !== 'string') throw new TypeError('The "splitToken" parameter is not a string');
