@@ -62,7 +62,7 @@ Used in conjunction with [@bbc/http-transport-cache](https://github.com/bbc/http
 
 ```js
 import HttpTransport from '@bbc/http-transport';
-import { events, maxAge, staleIfError } from '@bbc/http-transport-cache';
+import { maxAge, staleIfError } from '@bbc/http-transport-cache';
 
 const catbox = ...; // a catbox instance
 
