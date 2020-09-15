@@ -24,15 +24,11 @@ yarn add @bbc/http-transport-emf-stats
 
 ## Usage
 
-An example usage of this plugin is:
+**Without the cache enabled**
 
 ```js
 import HttpTransport from '@bbc/http-transport';
-```
 
-without cache enabled
-
-```js
 const client = HttpTransport
   .createBuilder()
   .userAgent('...')
@@ -42,9 +38,30 @@ const client = HttpTransport
   .createClient();
 ```
 
-or with cache enabled in conjunction with [@bbc/http-transport-cache](https://github.com/bbc/http-transport-cache)
+or
 
 ```js
+import HttpTransport from '@bbc/http-transport';
+
+const client = HttpTransport
+  .createBuilder()
+  .userAgent('...')
+  .retries(...)
+  .retryDelay(...)
+  .use(stats({
+    isCacheEnabled: false
+  }))
+  .createClient();
+```
+
+where `isCacheEnabled` is set to `false` by default.
+
+**With the cache enabled**
+
+Used in conjunction with [@bbc/http-transport-cache](https://github.com/bbc/http-transport-cache)
+
+```js
+import HttpTransport from '@bbc/http-transport';
 import { events, maxAge, staleIfError } from '@bbc/http-transport-cache';
 
 const catbox = ...; // a catbox instance
@@ -60,13 +77,13 @@ const client = HttpTransport
   .userAgent('...')
   .retries(...)
   .retryDelay(...)
-  .use(stats(events, cacheOpts.name))
+  .use(stats({
+    isCacheEnabled: true
+  }))
   .use(maxAge(catbox, cacheOpts))
   .use(staleIfError(catbox, cacheOpts))
   .createClient();
 ```
-
-It is important to pass the `events` EventEmitter object exposed by the `http-transport-cache` in order for the `stats` plugin to listen to the cache events emitted during the request.
 
 ## Stats
 
@@ -74,8 +91,8 @@ The stats object is structured as following:
 
 ```js
 {
-  attempts: [], // a list of objects representing each single attempt
-  attemptCount: 0, // The number of attempts in total. This number is equal to "attempts.length".
+  attempts: [],
+  attemptCount: 0, // The number of request attempts in total. This number is equal to "attempts.length".
   retryCount: 0, // The number of retried attempts. This number is equal to "attemptCount - 1".
   requestCount: 0, // The number of times a request is sent to and a response is received from the upstream
   requestErrorCount: 0, // The number of times the upstream service doesn't respond
@@ -85,7 +102,7 @@ The stats object is structured as following:
   response2xxCount: 0, // The number of 2XX responses
   response1xxCount: 0, // The number of 1XX responses
   responseInvalidCount: 0, // The number of invalid response statuses
-  cacheAudit: [] // A list of emitted cache events. It is populated by for troubleshooting/logging purposes
+  cacheAudit: [] // Contains a list of groups of triggered events from the cache. It is used for troubleshooting purposes
 }
 ```
 
@@ -108,8 +125,9 @@ or as following if the cache is enabled and a response is received:
     stale: boolean,
     error: boolean,
     timeout: boolean,
-    revalidate: boolean,
-    revalidateError: boolean
+    readTime: boolean,
+    writeTime: boolean,
+    connectionError: boolean
   },
   response: {
     time: number,
