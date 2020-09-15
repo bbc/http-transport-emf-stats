@@ -135,10 +135,15 @@ try {
 
 ## Plugin options
 
-The stats plugin only accepts two optional parameters:
+The stats plugin accepts the following object as input parameter:
 
-- `emitter`: it is an EventEmitter object exposed by [@bbc/http-transport-cache](https://github.com/bbc/http-transport-cache) which is used to listen to cache events.
-- `upstreamName`: it is a string which is used to build the event triggered by the EventEmitter, and represents the name of the upstream service.
+```js
+{
+  isCacheEnabled: true
+}
+```
+
+where `isCacheEnabled` allows to initialise the `cache` object of the `attempt`.
 
 ## Testing and linting
 
