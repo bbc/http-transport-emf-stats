@@ -105,8 +105,7 @@ export default async function stats(options = DEFAULT_OPTIONS, context, next) {
     }
     error.body = context.res.body;
     error.headers = context.res.headers;
-    error.responseStatus = context.res.statusCode;
-    error.responseTime = context.res.elapsedTime;
+    error.statusCode = context.res.statusCode;
     error.stats = context.res.stats;
     // tells http-transport to retry
     throw error;
