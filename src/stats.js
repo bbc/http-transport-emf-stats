@@ -1,13 +1,9 @@
 import * as init from './init';
 import { camelCase } from './util';
-import { HTTP_5XX_RESPONSE, DEFAULT_OPTIONS } from './consts';
 
-export default async function stats(options = DEFAULT_OPTIONS, context, next) {
-  // flags the presence of an upstream response
-  let withResponse = true;
-  // init the current attempt
-  const attempt = init.initAttempt(options);
+export const HTTP_5XX_RESPONSE = 'HTTP_5XX_RESPONSE';
 
+export default async function stats(context, next) {
   try {
     /**
      * It must be set before calling "next", otherwise
@@ -55,84 +51,78 @@ export default async function stats(options = DEFAULT_OPTIONS, context, next) {
      * From this point onward, a valid uncached response has been received.
      */
 
-    context.res.stats.requestCount += 1;
+    context.res.stats.metrics.requestCount += 1;
 
     // invalid HTTP response
     if (context.res.statusCode < 100) {
-      context.res.stats.responseInvalidCount += 1;
+      context.res.stats.metrics.responseInvalidCount += 1;
       return;
     }
 
     // 1xx response
     if (context.res.statusCode < 200) {
-      context.res.stats.response1xxCount += 1;
+      context.res.stats.metrics.response1xxCount += 1;
       return;
     }
 
     // 2xx response
     if (context.res.statusCode < 300) {
-      context.res.stats.response2xxCount += 1;
+      context.res.stats.metrics.response2xxCount += 1;
       return;
     }
 
     // 3xx response
     if (context.res.statusCode < 400) {
-      context.res.stats.response3xxCount += 1;
+      context.res.stats.metrics.response3xxCount += 1;
       return;
     }
 
     // 4xx response
     if (context.res.statusCode < 500) {
-      context.res.stats.response4xxCount += 1;
+      context.res.stats.metrics.response4xxCount += 1;
       return;
     }
 
     // 5xx response (it throws to eventually retry)
     if (context.res.statusCode < 600) {
-      context.res.stats.response5xxCount += 1;
+      context.res.stats.metrics.response5xxCount += 1;
       throw new Error(HTTP_5XX_RESPONSE);
     }
 
     // everything else is an invalid HTTP response too
-    context.res.stats.responseInvalidCount += 1;
+    context.res.stats.metrics.responseInvalidCount += 1;
   } catch (error) {
     // an error has been thrown because the upstream was unresponsive (e.g. ESOCKETTIMEDOUT)
     if (error.message !== HTTP_5XX_RESPONSE) {
-      // signal there was no response
-      withResponse = false;
       // increment the error count
-      context.res.stats.requestErrorCount += 1;
+      context.res.stats.metrics.requestErrorCount += 1;
     }
     error.body = context.res.body;
     error.headers = context.res.headers;
     error.statusCode = context.res.statusCode;
     error.stats = context.res.stats;
+
     // tells http-transport to retry
     throw error;
   } finally {
-    context.res.stats.attemptCount += 1;
-    attempt.id = context.res.stats.attemptCount;
+    context.res.stats.metrics.attemptCount += 1;
+    context.res.stats.metrics.responseTime += Number.isInteger(context.res.elapsedTime) ? context.res.elapsedTime : 0;
 
-    if (withResponse) {
-      attempt.response = {
-        body: context.res.body,
-        headers: context.res.headers,
-        status: context.res.statusCode,
-        time: context.res.elapsedTime
-      };
-    }
-
-    if (context.cacheStatus && Array.isArray(context.cacheStatus)) {
-      context.cacheStatus.forEach((cacheStatus) => {
-        attempt.cache[camelCase(cacheStatus)] = true;
-      });
+    if (Array.isArray(context.cacheStatus)) {
+      // adds the list of cache events in a "audit" array useful for troubleshooting
       context.res.stats.cacheAudit = context.cacheStatus;
+      // increments the counter for each cache event
+      context.cacheStatus.forEach((cacheStatus) => {
+        // except for "read_time" and "write_time" that we want to filter out
+        if (cacheStatus !== 'read_time' && cacheStatus !== 'write_time') {
+          // if the event is "connection_error" the counter to be incremented is "cacheConnectionErrorCount"
+          context.res.stats.metrics[`cache${camelCase(cacheStatus, true)}Count`] += 1;
+        }
+      });
     }
 
-    context.res.stats.attempts.push(attempt);
-
-    if (context.res.stats.attemptCount > 0) {
-      context.res.stats.retryCount = context.res.stats.attemptCount - 1;
+    if (context.res.stats.metrics.attemptCount > 0) {
+      context.res.stats.metrics.retryCount = context.res.stats.metrics.attemptCount - 1;
     }
   }
 }

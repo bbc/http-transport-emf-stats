@@ -2,83 +2,126 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import * as init from '../src/init';
 import stats from '../src/stats';
-import { DEFAULT_OPTIONS } from '../src/consts';
+import { camelCase } from '../src/util';
 
 describe('[src/stats.js]', () => {
   let context;
   let next;
 
   beforeEach(() => {
+    sinon.stub(init, 'initStats').returns({
+      metrics: {
+        attemptCount: 0,
+        retryCount: 0,
+        requestCount: 0,
+        requestErrorCount: 0,
+        response5xxCount: 0,
+        response4xxCount: 0,
+        response3xxCount: 0,
+        response2xxCount: 0,
+        response1xxCount: 0,
+        responseInvalidCount: 0,
+        responseTime: 0,
+        cacheHitCount: 0,
+        cacheMissCount: 0,
+        cacheStaleCount: 0,
+        cacheErrorCount: 0,
+        cacheTimeoutCount: 0,
+        cacheConnectionErrorCount: 0
+      },
+      cacheAudit: []
+    });
     context = {
-      res: {}
+      cacheStatus: [],
+      res: {
+        body: 'response body',
+        headers: 'response headers',
+        statusCode: 0
+      }
     };
-    next = sinon.spy();
+    next = sinon.stub();
   });
 
   afterEach(() => sinon.restore());
 
-  describe('attempt object initialisation', () => {
-    it('should call "initAttempt" with default options', async () => {
-      sinon.stub(init, 'initAttempt').returns({});
+  it('should initialise the stats object and call next', async () => {
+    await stats(context, next);
 
-      await stats(undefined, context, next);
-
-      sinon.assert.calledOnceWithExactly(init.initAttempt, DEFAULT_OPTIONS);
-    });
-
-    it('should call "initAttempt" with the emitter if set', async () => {
-      sinon.stub(init, 'initAttempt').returns({});
-
-      await stats(DEFAULT_OPTIONS, context, next);
-
-      sinon.assert.calledOnceWithExactly(init.initAttempt, DEFAULT_OPTIONS);
-    });
+    sinon.assert.calledOnce(init.initStats);
+    sinon.assert.calledOnce(next);
   });
 
-  it('should call next only once', async () => {
-    await stats(DEFAULT_OPTIONS, context, next);
-    sinon.assert.calledOnceWithExactly(next);
-  });
+  it('should throw an error with stats if "next" throws', async () => {
+    const errorMessage = 'ESOCKETTIMEDOUT';
+    next.throws(new Error(errorMessage));
 
-  describe('stats initialisation', () => {
-    it('should initialise stats if undefined', async () => {
-      const statsResponse = { attempts: [], cacheAudit: [] };
-      sinon.stub(init, 'initStats').returns(statsResponse);
-
-      await stats(DEFAULT_OPTIONS, context, next);
-
+    try {
+      await stats(context, next);
+    } catch (error) {
       sinon.assert.calledOnce(init.initStats);
-      expect(context.res).to.be.deep.equal({ stats: statsResponse });
-    });
+      sinon.assert.calledOnce(next);
+      expect(error.message).to.be.equal(errorMessage);
+      expect(error.body).to.be.equal(context.res.body);
+      expect(error.headers).to.be.equal(context.res.headers);
+      expect(error.statusCode).to.be.equal(context.res.statusCode);
+      expect(error.stats).to.be.deep.equal({
+        metrics: {
+          attemptCount: 1,
+          retryCount: 0,
+          requestCount: 0,
+          requestErrorCount: 1,
+          response5xxCount: 0,
+          response4xxCount: 0,
+          response3xxCount: 0,
+          response2xxCount: 0,
+          response1xxCount: 0,
+          responseInvalidCount: 0,
+          responseTime: 0,
+          cacheHitCount: 0,
+          cacheMissCount: 0,
+          cacheStaleCount: 0,
+          cacheErrorCount: 0,
+          cacheTimeoutCount: 0,
+          cacheConnectionErrorCount: 0
+        },
+        cacheAudit: []
+      });
+    }
+  });
 
-    it('should call initStats twice if next overrides the response with content from the cache', async () => {
-      const nextSpy = sinon.spy();
-      next = async () => {
-        context.res = {};
+  describe('when the response is cached', () => {
+    let nextSpy;
+
+    beforeEach(() => {
+      nextSpy = sinon.spy();
+      next = () => {
+        // retrieves the serialised response from the cache without the stats object
+        context.res = {
+          cacheStatus: [],
+          res: {
+            body: 'response body',
+            headers: 'response headers',
+            statusCode: 0
+          }
+        };
+        // calls the spy for "next";
         nextSpy();
       };
-      const statsResponse = { attempts: [], cacheAudit: [] };
-      sinon.stub(init, 'initStats').returns(statsResponse);
+    });
 
-      await stats(DEFAULT_OPTIONS, context, next);
+    it('should call "initStats" twice to prevent the reset of the stats object', async () => {
+      await stats(context, next);
 
       sinon.assert.calledTwice(init.initStats);
+      sinon.assert.calledOnce(nextSpy);
     });
 
-    it('should initialise the stats if next rejects', async () => {
-      next = sinon.stub().rejects();
-      try {
-        await stats(DEFAULT_OPTIONS, context, next);
-      } catch {
-        expect(context.res).to.haveOwnProperty('stats');
-      }
-    });
-  });
+    it('should increment the number of attempts but not the "requestCount"', async () => {
+      await stats(context, next);
 
-  it('should increase attempt and request counters', async () => {
-    await stats(DEFAULT_OPTIONS, context, next);
-    expect(context.res.stats.attemptCount).to.be.equal(1);
-    expect(context.res.stats.requestCount).to.be.equal(1);
+      expect(context.res.stats.metrics.attemptCount).to.be.equal(1);
+      expect(context.res.stats.metrics.requestCount).to.be.equal(0);
+    });
   });
 
   describe('the responseXxx counters', () => {
@@ -121,37 +164,152 @@ describe('[src/stats.js]', () => {
 
         if (statusCode === 500) {
           try {
-            await stats(DEFAULT_OPTIONS, context, next);
+            await stats(context, next);
           } catch (e) {
-            expect(context.res.statusCode).to.be.equal(statusCode);
-            expect(context.res.stats[expected]).to.be.equal(1);
+            expect(context.res.stats.metrics[expected]).to.be.equal(1);
+            expect(context.res.stats.metrics.requestCount).to.be.equal(1);
+            expect(context.res.stats.metrics.requestErrorCount).to.be.equal(0);
           }
           return;
         }
 
-        await stats(DEFAULT_OPTIONS, context, next);
-        expect(context.res.statusCode).to.be.equal(statusCode);
-        expect(context.res.stats[expected]).to.be.equal(1);
+        await stats(context, next);
+        expect(context.res.stats.metrics[expected]).to.be.equal(1);
+        expect(context.res.stats.metrics.requestCount).to.be.equal(1);
       });
     });
   });
 
-  it('should not increase the requests and response counters if the response is cached', async () => {
-    const nextSpy = sinon.spy();
-    next = async () => {
-      context.res = {};
-      nextSpy();
-    };
-    await stats(DEFAULT_OPTIONS, context, next);
-    expect(context.res.stats).to.haveOwnProperty('attemptCount', 1);
-    expect(context.res.stats).to.haveOwnProperty('retryCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('requestCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('requestErrorCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('response5xxCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('response4xxCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('response3xxCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('response2xxCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('response1xxCount', 0);
-    expect(context.res.stats).to.haveOwnProperty('responseInvalidCount', 0);
+  describe('attempts and retries', () => {
+    const tests = [
+      {
+        attempts: 1,
+        retries: 0
+      },
+      {
+        attempts: 2,
+        retries: 1
+      },
+      {
+        attempts: 3,
+        retries: 2
+      }
+    ];
+
+    tests.forEach((test) => {
+      const { attempts, retries } = test;
+
+      it(`should have ${attempts} attempts and ${retries} retries if the stats is called ${attempts} times`, async () => {
+        const promises = [];
+        for (let i = 0; i < attempts; i += 1) {
+          promises.push(stats(context, next));
+        }
+
+        await Promise.all(promises);
+
+        expect(context.res.stats.metrics.attemptCount).to.be.equal(attempts);
+        expect(context.res.stats.metrics.retryCount).to.be.equal(retries);
+      });
+    });
+  });
+
+  describe('the response time', () => {
+    const tests = [
+      {
+        elaspedTime: undefined,
+        responseTime: 0
+      },
+      {
+        elaspedTime: null,
+        responseTime: 0
+      },
+      {
+        elaspedTime: 'a string',
+        responseTime: 0
+      },
+      {
+        elaspedTime: true,
+        responseTime: 0
+      },
+      {
+        elaspedTime: 128,
+        responseTime: 128
+      }
+    ];
+
+    tests.forEach((test) => {
+      const { elaspedTime, responseTime } = test;
+
+      it(`should have the response time equal to ${responseTime} if elapsed time is ${elaspedTime}`, async () => {
+        context.res.elapsedTime = elaspedTime;
+        await stats(context, next);
+        expect(context.res.stats.metrics.responseTime).to.be.equal(responseTime);
+      });
+    });
+  });
+
+  describe('the cache counters and the cache audit array', () => {
+    const tests = [
+      {
+        cacheStatusLabel: 'is null',
+        cacheStatus: null,
+        cacheAuditLabel: 'an empty array',
+        cacheAudit: []
+      },
+      {
+        cacheStatusLabel: 'is undefined',
+        cacheStatus: undefined,
+        cacheAuditLabel: 'an empty array',
+        cacheAudit: []
+      },
+      {
+        cacheStatusLabel: 'is a boolean',
+        cacheStatus: false,
+        cacheAuditLabel: 'an empty array',
+        cacheAudit: []
+      },
+      {
+        cacheStatusLabel: 'is an empty array',
+        cacheStatus: [],
+        cacheAuditLabel: 'an empty array',
+        cacheAudit: []
+      },
+      {
+        cacheStatusLabel: 'has an unrecognised element',
+        cacheStatus: ['not_recognised'],
+        cacheAuditLabel: 'an empty array',
+        cacheAudit: []
+      },
+      {
+        cacheStatusLabel: 'is equal to ["hit", "miss", "stale"]',
+        cacheStatus: ['hit', 'miss', 'stale'],
+        cacheAuditLabel: '["hit", "miss", "stale"]',
+        cacheAudit: ['hit', 'miss', 'stale']
+      },
+      {
+        cacheStatusLabel: 'is equal to ["error", "timeout", "connection_error"]',
+        cacheStatus: ['error', 'timeout', 'connection_error'],
+        cacheAuditLabel: '["error", "timeout", "connection_error"]',
+        cacheAudit: ['error', 'timeout', 'connection_error']
+      }
+    ];
+
+    tests.forEach((test) => {
+      const {
+        cacheStatus,
+        cacheAudit,
+        cacheStatusLabel,
+        cacheAuditLabel
+      } = test;
+
+      it(`should have cacheAudit equal to ${cacheAuditLabel} if cacheStatus ${cacheStatusLabel}`, async () => {
+        context.cacheStatus = cacheStatus;
+        await stats(context, next);
+        expect(cacheAudit).to.be.equal(cacheAudit);
+        cacheAudit.forEach((cacheEvent) => {
+          expect(context.res.stats.metrics[`cache${camelCase(cacheEvent, true)}Count`]).to.be.equal(1);
+        });
+      });
+    });
   });
 });
