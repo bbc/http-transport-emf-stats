@@ -109,16 +109,27 @@ export default async function stats(context, next) {
     context.res.stats.metrics.responseTime += Number.isInteger(context.res.elapsedTime) ? context.res.elapsedTime : 0;
 
     if (Array.isArray(context.cacheStatus)) {
-      // adds the list of cache events in a "audit" array useful for troubleshooting
-      context.res.stats.cacheAudit = context.cacheStatus;
-      // increments the counter for each cache event
-      context.cacheStatus.forEach((cacheStatus) => {
-        // except for "read_time" and "write_time" that we want to filter out
-        if (cacheStatus !== 'read_time' && cacheStatus !== 'write_time') {
-          // if the event is "connection_error" the counter to be incremented is "cacheConnectionErrorCount"
-          context.res.stats.metrics[`cache${camelCase(cacheStatus, true)}Count`] += 1;
+      // adds the cache events to the "audit" array for troubleshooting purposes
+      context.res.stats.cacheAudit.push(...context.cacheStatus);
+
+      // Removes the elements from the "cacheStatus" array so to count them only once.
+      // The cache events are appended to the "cacheStatus" array, given the events are summed up
+      // by increasing a stateful counter in an iteration each time this plugin is invoked, if not removed
+      // the same events would be counted multiple times.
+      let cacheEvent = context.cacheStatus.shift();
+
+      // iterates while the array is not empty
+      while (cacheEvent) {
+        // filter "read_time" and "write_time" out
+        if (cacheEvent !== 'read_time' && cacheEvent !== 'write_time') {
+          // increments the relted cache counter
+          // (e.g. if the event is "connection_error" the counter to be incremented is "cacheConnectionErrorCount")
+          context.res.stats.metrics[`cache${camelCase(cacheEvent, true)}Count`] += 1;
         }
-      });
+        // gets the next element
+        // this allows the loop to exit
+        cacheEvent = context.cacheStatus.shift();
+      }
     }
 
     if (context.res.stats.metrics.attemptCount > 0) {
