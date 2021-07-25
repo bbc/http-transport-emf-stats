@@ -87,7 +87,7 @@ The stats object is structured as following:
     cacheTimeoutCount: 0,
     cacheConnectionErrorCount: 0
   },
-  cacheAudit: [] // Contains a list of groups of triggered events from the cache. It is used for troubleshooting purposes
+  cacheAudit: [] // A list of cache events triggered by the cache plugin if enabled. It is used for troubleshooting purposes only.
 }
 ```
 
