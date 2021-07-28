@@ -122,7 +122,7 @@ export default async function stats(context, next) {
       while (cacheEvent) {
         // filter "read_time" and "write_time" out
         if (cacheEvent !== 'read_time' && cacheEvent !== 'write_time') {
-          // increments the relted cache counter
+          // increments the related cache counter
           // (e.g. if the event is "connection_error" the counter to be incremented is "cacheConnectionErrorCount")
           context.res.stats.metrics[`cache${camelCase(cacheEvent, true)}Count`] += 1;
         }
