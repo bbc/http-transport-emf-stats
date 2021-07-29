@@ -3,7 +3,6 @@
 * [Installation](#installation)
 * [Usage](#usage)
 * [Stats](#stats)
-* [Plugin options](#plugin-options)
 * [Testing and linting](#testing-and-linting)
 
 # HTTP transport EMF stats
@@ -24,8 +23,6 @@ yarn add @bbc/http-transport-emf-stats
 
 ## Usage
 
-**Without the cache enabled**
-
 ```js
 import HttpTransport from '@bbc/http-transport';
 
@@ -37,24 +34,6 @@ const client = HttpTransport
   .use(stats())
   .createClient();
 ```
-
-or
-
-```js
-import HttpTransport from '@bbc/http-transport';
-
-const client = HttpTransport
-  .createBuilder()
-  .userAgent('...')
-  .retries(...)
-  .retryDelay(...)
-  .use(stats({
-    isCacheEnabled: false
-  }))
-  .createClient();
-```
-
-where `isCacheEnabled` is set to `false` by default.
 
 **With the cache enabled**
 
@@ -77,9 +56,7 @@ const client = HttpTransport
   .userAgent('...')
   .retries(...)
   .retryDelay(...)
-  .use(stats({
-    isCacheEnabled: true
-  }))
+  .use(stats())
   .use(maxAge(catbox, cacheOpts))
   .use(staleIfError(catbox, cacheOpts))
   .createClient();
@@ -91,52 +68,30 @@ The stats object is structured as following:
 
 ```js
 {
-  attempts: [],
-  attemptCount: 0, // The number of request attempts in total. This number is equal to "attempts.length".
-  retryCount: 0, // The number of retried attempts. This number is equal to "attemptCount - 1".
-  requestCount: 0, // The number of times a request is sent to and a response is received from the upstream
-  requestErrorCount: 0, // The number of times the upstream service doesn't respond
-  response5xxCount: 0, // The number of 5xx responses
-  response4xxCount: 0, // The number of 4xx responses
-  response3xxCount: 0, // The number of 3XX responses
-  response2xxCount: 0, // The number of 2XX responses
-  response1xxCount: 0, // The number of 1XX responses
-  responseInvalidCount: 0, // The number of invalid response statuses
-  cacheAudit: [] // Contains a list of groups of triggered events from the cache. It is used for troubleshooting purposes
-}
-```
-
-The `attempt` object is structured as following if no cache is enabled and no response is received:
-
-```js
-{
-  cache: null,
-  response: null
-}
-```
-
-or as following if the cache is enabled and a response is received:
-
-```js
-{
-  cache: {
-    hit: boolean,
-    miss: boolean,
-    stale: boolean,
-    error: boolean,
-    timeout: boolean,
-    readTime: boolean,
-    writeTime: boolean,
-    connectionError: boolean
+  metrics: {
+    attemptCount: 0, // The number of request attempts in total. This number is equal to "attempts.length".
+    retryCount: 0, // The number of retried attempts. This number is equal to "attemptCount - 1".
+    requestCount: 0, // The number of times a request is sent to and a response is received from the upstream
+    requestErrorCount: 0, // The number of times the upstream service doesn't respond
+    response5xxCount: 0, // The number of 5xx responses
+    response4xxCount: 0, // The number of 4xx responses
+    response3xxCount: 0, // The number of 3XX responses
+    response2xxCount: 0, // The number of 2XX responses
+    response1xxCount: 0, // The number of 1XX responses
+    responseInvalidCount: 0, // The number of invalid response statuses
+    responseTime: 0,
+    cacheHitCount: 0,
+    cacheMissCount: 0,
+    cacheStaleCount: 0,
+    cacheErrorCount: 0,
+    cacheTimeoutCount: 0,
+    cacheConnectionErrorCount: 0
   },
-  response: {
-    time: number,
-    status: number
-  }
+  cacheAudit: [] // A list of cache events triggered by the cache plugin. It is used for troubleshooting purposes only.
 }
 ```
 
-The `stats` object is set in the `res` object when the request resolves or in the error object when it rejects. If you want to access the stats info do as following:
+The `stats` object is set within `res` when the request resolves or in the error object when it rejects. If you want to access the stats info do as following:
 
 ```js
 try {
@@ -150,19 +105,6 @@ try {
   // can access stats data
 }
 ```
-
-## Plugin options
-
-The stats plugin accepts the following object as input parameter:
-
-```js
-{
-  isCacheEnabled: true
-}
-```
-
-where `isCacheEnabled` allows to initialise the `cache` object of the `attempt`.
-
 ## Testing and linting
 
 To run unit tests and coverage reports
